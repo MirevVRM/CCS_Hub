@@ -1,167 +1,168 @@
-# Пользовательское руководство (User Manual): CCS Hub Optimization Tool
+# User Manual: CCS Hub Optimization Tool
 
-Добро пожаловать в руководство по использованию приложения оптимизации хаба улавливания углекислого газа (CCS Hub)! 
+Welcome to the user manual for the CCS Hub optimization tool!
 
-Данный инструмент разработан для того, чтобы помочь инженерам, аналитикам и техническим руководителям находить оптимальный график подключения промышленных заводов к единой трубе по транспортировке CO₂. Используя это приложение, вы максимизируете объемы улавливаемого углерода и минимизируете затраты вашей компании, соблюдая строгие физические и временные ограничения системы.
+This tool is designed to help engineers, analysts, and technical leads determine the optimal schedule for connecting industrial plants to a shared CO₂ transport pipeline. Using this application, you can maximize captured CO₂ volumes and minimize total system cost while complying with strict physical and temporal system constraints.
 
 ---
 
-## 🚀 Быстрый старт (Quick Start)
+## 🚀 Quick Start
 
-Если у вас уже установлен Python 3.9+, выполните всего три шага, чтобы начать работу:
+If you already have Python 3.9+ installed, complete just three steps to get started:
 
-**1. Откройте терминал в папке с вашим проектом (`case_one`).**
+**1. Open a terminal in your project folder (`case_one`).**
 
-**2. Настройте окружение и установите зависимости:**
+**2. Set up the environment and install dependencies:**
 ```bash
 python -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-**3. Запустите визуальный интерфейс:**
+**3. Launch the visual interface:**
 ```bash
 streamlit run app.py
 ```
 
-После этого в браузере откроется окно программы (по умолчанию `http://localhost:8501`). Вы можете нажать `"Download Excel Template"` в левой панели, заполнить шаблон своими данными заводов и сразу загрузить его обратно для расчета. Готово!
+After this, the application window will open in your browser (default is `http://localhost:8501`). You can click `"Download Excel Template"` in the left panel, fill out the template with your source portfolio data, and immediately upload it back for the calculation. You're set!
 
 ---
 
-## 🛠️ Системные требования и установка (Installation)
+## 🛠️ System Requirements and Installation
 
-Если вам нужно детальное руководство по установке:
+If you need a detailed installation guide:
 
-### 1. Требования к системе
-- Операционная система: Windows, macOS или Linux.
-- Установленный язык **Python версии 3.9** (или новее). Если Python не установлен, скачайте его с [официального сайта](https://www.python.org/downloads/). *Убедитесь, что при установке вы поставили галочку «Add Python to PATH».*
+### 1. System Requirements
+- Operating System: Windows, macOS, or Linux.
+- Installed **Python version 3.9** (or newer). If Python is not installed, download it from the [official website](https://www.python.org/downloads/). *Make sure to check the "Add Python to PATH" box during installation.*
 
-### 2. Пошаговая установка
-Откройте встроенный терминал (например, в VS Code, PyCharm, или обычную консоль PowerShell Windows), перейдите в папку проекта `case_one` и выполните следующие команды одну за другой:
+### 2. Step-by-Step Installation
+Open a built-in terminal (e.g., in VS Code, PyCharm, or a standard Windows PowerShell console), navigate to the `case_one` project folder, and run the following commands one by one:
 
-1. **Создайте виртуальное окружение** (это изолированная среда для программы, чтобы она не конфликтовала с вашей операционной системой):
+1. **Create a virtual environment** (this is an isolated environment for the program to prevent conflicts with your operating system):
    ```bash
    python -m venv venv
    ```
-2. **Активируйте виртуальное окружение:** 
+2. **Activate the virtual environment:** 
    ```bash
    .\venv\Scripts\activate
    ```
-   *(Вы должны увидеть префикс `(venv)` в вашей командной строке перед дальнейшим вводом команд).*
-3. **Установите все требуемые библиотеки:**
+   *(You should see the `(venv)` prefix in your command prompt before entering further commands).*
+3. **Install all required libraries:**
    ```bash
    pip install -r requirements.txt
    ```
 
-Теперь программа полностью готова к работе.
+The application is now completely ready for use.
 
 ---
 
-## 🏁 Первый запуск (First Launch)
+## 🏁 First Launch
 
-После успешной установки запустите веб-интерфейс приложения. Предварительно убедитесь, что ваше виртуальное окружение активировано (есть префикс `(venv)`):
+After successful installation, launch the application's web interface. First, ensure your virtual environment is activated (the `(venv)` prefix is present):
 
 ```bash
 streamlit run app.py
 ```
 
-Команда запустит локальный веб-сервер и автоматически откроет страницу `http://localhost:8501` в вашем браузере по умолчанию.
+The command will start a local web server and automatically open the page `http://localhost:8501` in your default browser.
 
-> **💡 Как остановить программу:**
-> Когда вы закончите работу с интерфейсом, вернитесь в терминал, где вы вводили команду, и нажмите `Ctrl + C`. Сервер выключится.
-> Если вы используете PowerShell и процесс не закрывается, выполните:
+> **💡 How to stop the program:**
+> When you are finished working with the interface, return to the terminal where you entered the command and press `Ctrl + C`. The server will shut down.
+> If you are using PowerShell and the process does not close, run:
 > ```powershell
 > Stop-Process -Id (Get-NetTCPConnection -LocalPort 8501).OwningProcess -Force
 > ```
 
 ---
 
-## 📁 Подготовка входных файлов (Data Preparation)
+## 📁 Data Preparation
 
-Хотя вы можете вводить информацию о заводах вручную непосредственно в самом интерфейсе, для реальных сценариев гораздо удобнее загружать готовые файлы через левое боковое меню (**Scenario Management**).
+Although you can enter plant information manually directly in the interface, for practical scenarios it is much more convenient to upload prepared files via the left sidebar (**Scenario Management**).
 
-Вам доступно три формата загрузки, у каждого из которых свое предназначение:
+There are three upload formats available, each with its own specific purpose:
 
-### 1. Работа с Excel (`.xlsx`) — Основной формат 
-> Самый рекомендуемый стартовый вариант. Вы можете скачать заготовку кнопкой `"Download Excel Template"` в левой панели окна.
-Шаблон состоит из двух листов:
-- **`SystemParameters`**: Ваши базовые ограничения. Год старта (например, 2025), пропускная способность трубы (Mt/y), вместимость всего хранилища (Mt) и т.д.
-- **`Plants`**: Список ваших заводов-эмиттеров. Здесь вы указываете их идентификаторы, названия, годовой выброс CO₂, стоимость улавливания тонны CO₂ и оставшийся срок жизни. Эта информация загрузится в систему и заменит текущую.
+### 1. Working with Excel (`.xlsx`) — Primary Format
+> The most recommended starting option. You can download a blank template by clicking the `"Download Excel Template"` button in the left panel of the window.
 
-### 2. Работа с CSV (`.csv`) — Ресурсный формат
-- **Для чего нужен:** Используйте его, если вы хотите загрузить только **массив заводов** из сторонней корпоративной базы (только то, что находится на листе `Plants`). 
-- **Поведение:** Загрузка CSV-файла **не сбрасывает** параметры системы. Характеристики трубы и хранилища останутся такими, какими вы их настроили в окне интерфейса заранее.
+The template consists of two sheets:
+- **`SystemParameters`**: Your basic constraints. Start year (e.g., 2025), annual hub capacity (Mt/y), cumulative storage capacity (Mt), etc.
+- **`Plants`**: Your source portfolio. Here you specify their identifiers, names, annual CO₂ emissions, the cost of capturing a ton of CO₂, and their remaining lifetime. This information will be loaded into the system and replace the current data.
 
-### 3. Работа с JSON (`.json`) — Сохранение сессии
-- **Для чего нужен:** Формат для полного сохранения состояния вашей сессии работы. Включает в себя сразу всё: и системные параметры, и список установок.
-- Используйте кнопку `"Download JSON Scenario"` в левой панели, чтобы выгрузить вашу работу, а потом восстановить в любой момент через загрузку.
+### 2. Working with CSV (`.csv`) — Portfolio Input Format
+- **Purpose:** Use this if you want to upload only your **source portfolio** from an external corporate database (only the data that belongs on the `Plants` sheet).
+- **Behavior:** Uploading a CSV file **does not reset** the system parameters. The properties for the pipeline and storage will remain exactly as you configured them previously in the interface.
 
-### ⏳ Как понимать "Оставшийся срок жизни" (Remaining Life)?
-Важной деталью при заполнении параметра `Remaining Life` у завода является способ его отсчета.
+### 3. Working with JSON (`.json`) — Session Save
+- **Purpose:** A format for fully saving the state of your working session. It includes absolutely everything: both system parameters and the source portfolio.
+- Use the `"Download JSON Scenario"` button in the left panel to export your work, and then restore it at any time by uploading it again.
 
-> **Пример:** 
-> Весь ваш горизонт планирования составляет 25 лет (с 2025 по 2050). 
-> Допустим, у завода «Цемент №1» физический оставшийся срок жизни равен **15 годам** — отсчет этого срока всегда идет строго от *старта горизонта планирования* (от 2025 года). 
+### ⏳ How to interpret "Remaining Lifetime" (`Remaining Life`)?
+An important detail when populating the `Remaining Life` parameter for a plant is how it is measured.
+
+> **Example:** 
+> Your total planning horizon is 25 years (from 2025 to 2050). 
+> Suppose the physical remaining lifetime of the "Cement #1" plant is **15 years** — the counting of this period always starts strictly from the *start of the planning horizon* (from 2025). 
 > 
-> Если оптимизатор решит подключить завод к трубе сразу в 2025 году, он проработает с трубой все 15 лет. 
-> Если же система решит отложить подключение этого завода на 5 лет (до 2030 года), то он сможет полезно проработать в сети CCS только **$15 - 5 = 10$ лет**, поскольку его физический ресурс истечет в те же самые сроки (к 2040 году).
+> If the optimization model decides to apply a CO₂ capture retrofit to the plant and connect it to the pipeline immediately in 2025, it will remain active in the CCS network for the full 15 years.
+> However, if the system decides to delay connecting this plant by 5 years (until 2030), it will only be able to remain active in the CCS network for **$15 - 5 = 10$ years**, since its physical operational life will expire at the exact same time (by 2040).
 
 ---
 
-## 🗺️ Работа в интерфейсе: Руководство по вкладкам
+## 🗺️ Working in the Interface: Tab Guide
 
-Центральная часть приложения разделена на пять главных вкладок.
+The central part of the application is divided into five main tabs.
 
-### Вкладка 1: ⚙️ System Parameters
-**Что вы здесь делаете:** Устанавливаете физические "правила игры" вашей инфраструктуры. Настройте общий горизонт расчета в годах, стартовый год, пропускной объем трубы и емкость подземного хранилища. 
-*Особым параметром здесь является "Minimum Connection Time" — это порог для входа. Завод не будет подключен вообще, если система не способна держать его в трубе хотя бы указанное количество лет.*
+### Tab 1: ⚙️ System Parameters
+**What you do here:** Set the main system constraints for your infrastructure. Configure the overall planning horizon in years, the start year, the annual hub capacity, and the cumulative storage capacity.
+*A special parameter here is "Minimum Connection Time" (minimum connection duration) — this is a strict minimum operational requirement. A plant will not undergo a CO₂ capture retrofit and be connected at all if the system is unable to keep it in the pipeline for at least the specified number of years.*
 
-### Вкладка 2: 🏭 Plants Configuration
-**Что вы здесь делаете:** Управляете заводами прямо в браузере. Вы можете добавлять новые строки, редактировать названия, объемы выброса и стоимость. Таблица автоматически рассчитает абсолютный максимум выбросов завода за весь его жизненный цикл.
+### Tab 2: 🏭 Plants Configuration
+**What you do here:** Manage your source portfolio directly in the browser. You can add new rows, edit names, emission volumes, and costs. The table will automatically calculate the absolute maximum emissions of a plant over its entire remaining lifetime.
 
-### Вкладка 3: 🚀 Optimization Summary
-**Что вы здесь делаете:** Запускаете процесс вычислений!
-1. Нажмите большую кнопку **Run Two-Stage Optimization**. 
-2. Инструмент просчитает комбинации и выдаст оптимальный график подключений.
-3. **Как интерпретировать результаты:** Здесь вы увидите главные бизнес-метрики: объем всего захваченного CO₂ и общую цену в €. Если `Total Captured CO₂` меньше, чем сумма выбросов всех заводов, значит кто-то не влез в рамки трубы или хранилища. Ниже вы увидите две диаграммы с долями каждого завода в общем объеме и общих затратах.
+### Tab 3: 🚀 Optimization Summary
+**What you do here:** Launch the calculation process!
+1. Click the large **Run Two-Stage Optimization** button.
+2. The optimization model (using mixed-integer linear programming (MILP)) will evaluate feasible retrofit schedules and provide the optimal connection schedule.
+3. **How to interpret the results:** Here you will see the main business metrics: total captured CO₂ volume and the total system cost in €. If `Total Captured CO₂` is less than the sum generated by the entire source portfolio, it means some sources did not fit within the constraints of the annual hub capacity or cumulative storage capacity. Below, you will see two charts showing the share of each plant in the total volume and total costs.
 
-### Вкладка 4: 📊 Detailed Analytics
-**Что вы здесь делаете:** Графически изучаете систему в динамике по годам:
-- Слева (Hub Load Contributions): диаграмма показывает, какие заводы наполняли трубу в каждый конкретный год и не уперлись ли вы в годовой лимит (красный пунктир трубы).
-- Справа (Cumulative Storage): график показывает скорость заполнения глобального газового хранилища. Вы наглядно увидите год, когда место в резервуаре закончится окончательно.
+### Tab 4: 📊 Detailed Analytics
+**What you do here:** Graphically analyze the system's dynamics over the years:
+- Left (Hub Load Contributions): A stacked bar chart showing which plants were filling the pipeline in each specific year, and whether you hit the annual limit (the red dashed line representing annual hub capacity).
+- Right (Cumulative Storage): A line chart showing the rate at which the cumulative storage capacity is being used. You will clearly see the year when the cumulative storage capacity is definitively exhausted.
 
-### Вкладка 5: 💡 Decision Explanations
-**Что вы здесь делаете:** Читаете подробные объяснения, почему оптимизатор принял именно такое решение по каждому конкретному заводу.
-- 🟢 **Selected**: Завод взят в работу. Указан год старта и диагностика того, мог ли он стартовать раньше.
-- 🔴 **Not Selected**: Завод отсеян. Обычно это значит, что в трубе место заняли более оптимальные конкуренты (например, с более низкими затратами на улавливание).
-- ⚪ **Filtered Out Early**: Завод даже не дошел до математического расчета, так как его характеристики (например, слишком короткий срок жизни) нарушают жесткие бизнес-правила из Вкладки 1.
-
----
-
-## 💾 Экспорт результатов
-
-Завершив анализ на **Вкладке 3** (Optimization Summary), вы можете сохранить готовый проект себе на компьютер. Прокрутите Вкладку 3 вниз к разделу «Export Solution».
-
-Вам предлагаются форматы скачивания:
-1. **Excel (.xlsx)**: Самый удобный для чтения отчёт. В один файл вложится 5 различных листов с цифрами по всей вашей схеме работы, стоимостью и расшифровкой поведения заводов. 
-2. **JSON**: Инфраструктурный формат. В него сохранится всё решение (удобно для разработчиков).
-3. **CSV Archive (.zip)**: 5 отдельных `.csv` таблиц, упакованных в zip-архив (отлично подходит для загрузки в системы аналитики PowerBI или Tableau).
+### Tab 5: 💡 Decision Explanations
+**What you do here:** Read detailed explanations of why the optimization model made a specific decision for each individual plant.
+- 🟢 **Selected**: The plant is selected for a CO₂ capture retrofit. Its start year is indicated, along with an analysis of whether it could have started earlier.
+- 🔴 **Not Selected**: The plant was discarded. Typically, this means that more optimal competitors (e.g., with lower capture costs) have taken up the available capacity.
+- ⚪ **Filtered Out Early**: The plant did not even reach the mathematical calculation stage, as its characteristics (e.g., a remaining lifetime that is too short to meet the minimum connection duration) violate the strict system constraints from Tab 1.
 
 ---
 
-## ❓ Типовые ошибки и их решение (Troubleshooting)
+## 💾 Exporting Results
 
-### 1. "Error loading file..." при загрузке Excel или CSV
-**Причина:** Программа не может распознать столбцы. Названия столбцов (Header) в вашем файле должны строго совпадать с английскими именами, которые ожидает система (например, `co2_flow_mtpy`).
-👉 **Решение:** Воспользуйтесь кнопкой `"Download Excel Template"` в левой панели интерфейса, скопируйте ваши данные в скачанный шаблон, сохраняя оригинальные заголовки на английском.
+After completing your case study on **Tab 3** (Optimization Summary), you can save the finished project to your computer. Scroll down Tab 3 to the "Export Solution" section.
 
-### 2. Кнопка расчета выдает красную ошибку: "No valid connection options found"
-**Причина:** Это логическая (а не программная) ситуация. Она означает, что ваши системные ограничения (размер трубы, хранилища или минимальный срок подключения) слишком жесткие. Ни один завод из вашего списка физически не может быть подключен с соблюдением всех ваших правил одновременно.
-👉 **Решение:** Перейдите на Вкладку 1. Попробуйте увеличить размер трубы/хранилища или снизить требования к "Minimum Connection Time (years)" — после этого запустите расчет заново.
+The following download formats are available:
+1. **Excel (.xlsx)**: The most reader-friendly report format. A single file contains 5 different sheets with figures covering your entire operational scheme, costs, and an explanation of the plants' behavior.
+2. **JSON**: An infrastructure format. The complete solution is stored in this format (convenient for developers).
+3. **CSV Archive (.zip)**: 5 separate `.csv` tables packed into a zip archive (excellent for loading into analytics systems like Power BI or Tableau).
 
-### 3. В терминале ошибка "streamlit is not recognized..."
-**Причина:** Системе Windows неизвестна команда Streamlit, так как вы не активировали виртуальное окружение.
-👉 **Решение:** Перед вызовом Streamlit вбейте в терминал команду `.\venv\Scripts\activate`. Убедитесь, что слева в командной строке появился маркер `(venv)`.
+---
 
-### 4. Почему выбран завод B, а не завод A, хотя завод A дешевле за тонну?
-**Причина:** Логика оптимизатора устроена так: сначала он **максимизирует объем** (CO₂), и лишь затем минимизирует затраты (Cost). Если завод B выдает огромный объем CO₂ (лучше утилизирует трубу), то программа предпочтет его, даже если он немного дороже в пересчете на тонну, чтобы глобальный показатель улавливания был как можно выше.
+## ❓ Troubleshooting
+
+### 1. "Error loading file..." when uploading Excel or CSV
+**Cause:** The program cannot recognize the columns. The column names (Headers) in your file must strictly match the English names expected by the system (e.g., `co2_flow_mtpy`).
+👉 **Fix:** Use the `"Download Excel Template"` button in the left panel of the interface, and copy your data into the downloaded template, keeping the original English headers.
+
+### 2. The calculation button throws a red error: "No valid connection options found"
+**Cause:** This is a logical (not programmatic) situation. It means your system constraints (annual hub capacity, cumulative storage capacity, or minimum connection duration) are too strict. Not a single plant from your source portfolio can physically be connected while satisfying all your constraints simultaneously.
+👉 **Fix:** Go to Tab 1. Try increasing the pipeline/storage capacity or lowering the "Minimum Connection Time (years)" requirement — then run the calculation again.
+
+### 3. Terminal error "streamlit is not recognized..."
+**Cause:** The Windows system does not recognize the Streamlit command because you have not activated the virtual environment.
+👉 **Fix:** Before calling Streamlit, type `.\venv\Scripts\activate` into the terminal. Ensure the `(venv)` marker appears on the left in the command prompt.
+
+### 4. Why is plant B selected instead of plant A, even though plant A is cheaper per ton?
+**Cause:** The logic of the optimization model (MILP) is designed as follows: first, it **maximizes the volume** (CO₂), and only then does it minimize the costs (Cost). If plant B emits a massive volume of CO₂ (better utilizing the pipeline's annual hub capacity), the program will prefer it over plant A—even if it is slightly more expensive per ton—to ensure the total captured CO₂ volume is as high as possible.
