@@ -1,0 +1,44 @@
+{
+  "system_parameters": {
+    "planning_horizon_y": 25,
+    "start_year": 2025,
+    "annual_hub_capacity_mtpy": 16.8,
+    "cumulative_storage_capacity_mt": 250.0,
+    "minimum_connection_time_y": 10,
+    "capture_efficiency": 0.9
+  },
+  "plants": [
+    {
+      "id": 1,
+      "name": "Plant 1",
+      "co2_flow_mtpy": 3.8,
+      "capture_cost_euro_per_t": 40.0,
+      "remaining_life_y": 20,
+      "max_co2_mt": 76.0
+    },
+    {
+      "id": 2,
+      "name": "Plant 2",
+      "co2_flow_mtpy": 2.28,
+      "capture_cost_euro_per_t": 44.0,
+      "remaining_life_y": 18,
+      "max_co2_mt": 41.04
+    },
+    {
+      "id": 3,
+      "name": "Plant 3",
+      "co2_flow_mtpy": 1.5,
+      "capture_cost_euro_per_t": 35.0,
+      "remaining_life_y": 25,
+      "max_co2_mt": 37.5
+    },
+    {
+      "id": 4,
+      "name": "Plant 4",
+      "co2_flow_mtpy": 8.0,
+      "capture_cost_euro_per_t": 50.0,
+      "remaining_life_y": 5,
+      "max_co2_mt": 40.0
+    }
+  ]
+}

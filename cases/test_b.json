@@ -1,0 +1,15 @@
+{
+  "system_parameters": {
+    "planning_horizon_y": 25,
+    "start_year": 2025,
+    "annual_hub_capacity_mtpy": 50.0,
+    "cumulative_storage_capacity_mt": 100.0,
+    "minimum_connection_time_y": 5,
+    "capture_efficiency": 0.9
+  },
+  "plants": [
+    {"id": 1, "name": "Expensive But Small", "co2_flow_mtpy": 1.0, "capture_cost_euro_per_t": 80.0, "remaining_life_y": 20},
+    {"id": 2, "name": "Cheap But Huge", "co2_flow_mtpy": 10.0, "capture_cost_euro_per_t": 30.0, "remaining_life_y": 20},
+    {"id": 3, "name": "Medium", "co2_flow_mtpy": 4.0, "capture_cost_euro_per_t": 40.0, "remaining_life_y": 20}
+  ]
+}

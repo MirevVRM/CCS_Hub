@@ -1,0 +1,14 @@
+{
+  "system_parameters": {
+    "planning_horizon_y": 20,
+    "start_year": 2025,
+    "annual_hub_capacity_mtpy": 5.0,
+    "cumulative_storage_capacity_mt": 500.0,
+    "minimum_connection_time_y": 5,
+    "capture_efficiency": 0.9
+  },
+  "plants": [
+    {"id": 1, "name": "Normal Plant", "co2_flow_mtpy": 4.0, "capture_cost_euro_per_t": 40.0, "remaining_life_y": 10},
+    {"id": 2, "name": "Giant Plant", "co2_flow_mtpy": 10.0, "capture_cost_euro_per_t": 35.0, "remaining_life_y": 10}
+  ]
+}
