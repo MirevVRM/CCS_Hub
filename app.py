@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import json
+import io
 import os
 import glob
 from dataclasses import asdict
@@ -56,30 +57,53 @@ def save_results(plant_results, yearly_results, summary, plant_year_df, yearly_e
         json.dump(output_data, f, indent=2, ensure_ascii=False)
     st.success(f"Saved results and detailed analytics to {filename}")
 
-def apply_universal_chart_formatting(chart: alt.Chart) -> alt.Chart:
+def apply_universal_chart_formatting(chart: alt.Chart, force_black: bool = False) -> alt.Chart:
     """
     Applies unified configuration to Altair charts to prevent text truncation, 
     improve readability across normal and Fullscreen modes, and maintain UI stability.
     """
+    text_c = '#000000' if force_black else 'currentColor'
+    label_fs = 14 if force_black else 13
+    title_fs = 16 if force_black else 15
+    title_main_fs = 18 if force_black else 16
+    
     return chart.configure_axis(
-        labelLimit=0,      # Prevent Y/X axis long names from truncating (e.g., 'Refinery (1 M...')
-        labelFontSize=13,  # Baseline readable size for labels
-        titleFontSize=15,  # Baseline readable size for axis titles
+        labelLimit=1000,   # Prevent Y/X axis long names from truncating (1000px limit)
+        labelOverlap=True if force_black else False, # Allow Altair to hide overlapping labels in export
+        labelFontSize=label_fs,
+        titleFontSize=title_fs,
         labelPadding=5,
-        titlePadding=10
+        titlePadding=10,
+        labelColor=text_c, # Inherit Streamlit DOM text color or force black for SVG export
+        titleColor=text_c,
+        tickColor=text_c,
+        domainColor=text_c
     ).configure_legend(
-        labelLimit=0,
-        labelFontSize=13,
-        titleFontSize=14,
-        symbolSize=150
+        labelLimit=1000,
+        labelFontSize=label_fs,
+        titleFontSize=title_fs,
+        symbolSize=150 if not force_black else 200,
+        labelColor=text_c,
+        titleColor=text_c
     ).configure_title(
-        fontSize=16,
+        fontSize=title_main_fs,
         fontWeight='bold',
         anchor='start',
-        offset=15
+        offset=15,
+        color=text_c       # Inherit Streamlit DOM text color or force black for SVG export
     ).configure_view(
         strokeOpacity=0    # Clean up default border
     )
+
+def render_download_button(chart_export: alt.Chart, filename: str, key: str):
+    """Generates an SVG on the server and provides a download button."""
+    try:
+        f = io.StringIO()
+        chart_export.save(f, format='svg')
+        svg_data = f.getvalue()
+        st.download_button("📥 Download SVG for Word", data=svg_data, file_name=filename, mime="image/svg+xml", key=key)
+    except Exception as e:
+        st.error(f"SVG export failed. Please ensure `vl-convert-python` is installed. Error: {e}")
 
 # ==============================================================================
 # State Initialization
@@ -360,6 +384,12 @@ with tab_opt:
         p_df = pd.DataFrame([asdict(p) for p in res["plants"]])
         selected_p_df = p_df[p_df['selected'] == True].copy()
         
+        # Consistent Color Palette for Export & UI
+        all_plants = sorted(p_df['plant_name'].unique())
+        # Tableau 10 standard professional palette
+        hex_colors = ["#4c78a8", "#f58518", "#e45756", "#72b7b2", "#54a24b", "#eeca3b", "#b279a2", "#ff9da6", "#9d755d", "#bab0ac"] * 3
+        plant_color_scale = alt.Scale(domain=all_plants, range=hex_colors[:len(all_plants)])
+        
         if not selected_p_df.empty and smry.total_captured_co2_mt > 0:
             selected_p_df['co2_share_pct'] = (selected_p_df['cumulative_captured_co2_mt'] / smry.total_captured_co2_mt * 100).round(1)
             selected_p_df['cost_share_pct'] = (selected_p_df['total_capture_cost_euro'] / smry.total_capture_cost_euro * 100).round(1)
@@ -377,74 +407,86 @@ with tab_opt:
             
             max_co2 = float(selected_p_df['cumulative_captured_co2_mt'].max())
             max_cost = float(selected_p_df['total_capture_cost_euro'].max())
+            
+            sorted_co2 = selected_p_df.sort_values(by='cumulative_captured_co2_mt', ascending=False)['plant_name'].tolist()
+            sorted_cost = selected_p_df.sort_values(by='total_capture_cost_euro', ascending=False)['plant_name'].tolist()
 
             # --- CO2 Chart ---
-            bar_co2 = alt.Chart(selected_p_df).mark_bar(cornerRadiusEnd=3).encode(
-                x=alt.X('cumulative_captured_co2_mt:Q', title='Captured CO₂ (Mt)', scale=alt.Scale(domain=[0, max_co2 * 1.30])),
-                y=alt.Y('plant_name:N', sort='-x', title=None),
-                color=alt.Color('plant_name:N', legend=None),
-                opacity=alt.condition(hover, alt.value(1.0), alt.value(0.4)),
-                tooltip=[
-                    alt.Tooltip('plant_name:N', title='Plant'),
-                    alt.Tooltip('cumulative_captured_co2_mt:Q', title='CO2 Captured (Mt)', format='.3f'),
-                    alt.Tooltip('co2_share_pct:Q', title='Share (%)', format='.1f')
-                ]
-            )
+            def get_bar_co2(interactive=True):
+                op = alt.condition(hover, alt.value(1.0), alt.value(0.4)) if interactive else alt.value(1.0)
+                return alt.Chart(selected_p_df).mark_bar(cornerRadiusEnd=3).encode(
+                    x=alt.X('cumulative_captured_co2_mt:Q', title='Captured CO₂ (Mt)', scale=alt.Scale(domain=[0, max_co2 * 1.30])),
+                    y=alt.Y('plant_name:N', sort=sorted_co2, title=None),
+                    color=alt.Color('plant_name:N', legend=None, scale=plant_color_scale),
+                    opacity=op,
+                    tooltip=[
+                        alt.Tooltip('plant_name:N', title='Plant'),
+                        alt.Tooltip('cumulative_captured_co2_mt:Q', title='CO2 Captured (Mt)', format='.3f'),
+                        alt.Tooltip('co2_share_pct:Q', title='Share (%)', format='.1f')
+                    ]
+                )
 
             # Labels for CO2
-            text_co2 = alt.Chart(selected_p_df).mark_text(
-                align='left', 
-                baseline='middle', 
-                dx=4, 
-                fontWeight='bold',
-                clip=False, # Make sure long labels are not clipped off the graph
-                size=alt.expr("max(13, min(width / 40, 18))") # Dynamic font size scaling
-            ).encode(
-                x=alt.X('cumulative_captured_co2_mt:Q'),
-                y=alt.Y('plant_name:N', sort='-x'),
-                text='co2_label:N',
-                color=alt.Color('plant_name:N', legend=None),
-                opacity=alt.condition(hover, alt.value(1.0), alt.value(0.4))
-            )
+            def get_text_co2(color_hex, interactive=True):
+                op = alt.condition(hover, alt.value(1.0), alt.value(0.4)) if interactive else alt.value(1.0)
+                return alt.Chart(selected_p_df).mark_text(
+                    align='left', baseline='middle', dx=4, fontWeight='bold', clip=False,
+                    size=alt.expr("max(13, min(width / 40, 18))"), color=color_hex
+                ).encode(
+                    x=alt.X('cumulative_captured_co2_mt:Q'), y=alt.Y('plant_name:N', sort=sorted_co2),
+                    text='co2_label:N', opacity=op
+                )
 
-            chart_co2 = (bar_co2 + text_co2).properties(title="Total Captured CO₂ Share", height=min(350, max(200, len(selected_p_df)*42))).add_params(hover)
+            export_h = min(450, max(300, len(selected_p_df)*60))
+            chart_co2_ui = apply_universal_chart_formatting((get_bar_co2(True) + get_text_co2('currentColor', True)).properties(title="Total Captured CO₂ Share", height=min(350, max(200, len(selected_p_df)*42))).add_params(hover))
+            chart_co2_export = apply_universal_chart_formatting((get_bar_co2(False) + get_text_co2('#000000', False)).properties(
+                title="Total Captured CO₂ Share", width=700, height=export_h
+            ), force_black=True)
 
             # --- Cost Chart ---
-            bar_cost = alt.Chart(selected_p_df).mark_bar(cornerRadiusEnd=3).encode(
-                x=alt.X('total_capture_cost_euro:Q', title='Capture Cost (€)', scale=alt.Scale(domain=[0, max_cost * 1.30])),
-                y=alt.Y('plant_name:N', sort='-x', title=None),
-                color=alt.Color('plant_name:N', legend=None),
-                opacity=alt.condition(hover, alt.value(1.0), alt.value(0.4)),
-                tooltip=[
-                    alt.Tooltip('plant_name:N', title='Plant'),
-                    alt.Tooltip('total_capture_cost_euro:Q', title='Capture Cost (€)', format=',.0f'),
-                    alt.Tooltip('cost_share_pct:Q', title='Share (%)', format='.1f')
-                ]
-            )
+            def get_bar_cost(interactive=True):
+                op = alt.condition(hover, alt.value(1.0), alt.value(0.4)) if interactive else alt.value(1.0)
+                return alt.Chart(selected_p_df).mark_bar(cornerRadiusEnd=3).encode(
+                    x=alt.X('total_capture_cost_euro:Q', 
+                            title='Capture Cost (€)', 
+                            scale=alt.Scale(domain=[0, max_cost * 1.30]),
+                            axis=alt.Axis(
+                                labelExpr="datum.value >= 1e9 ? '€' + format(datum.value / 1e9, '.0f') + 'B' : datum.value >= 1e6 ? '€' + format(datum.value / 1e6, '.0f') + 'M' : '€' + format(datum.value, '.0f')",
+                                tickCount=5
+                            )),
+                    y=alt.Y('plant_name:N', sort=sorted_cost, title=None),
+                    color=alt.Color('plant_name:N', legend=None, scale=plant_color_scale),
+                    opacity=op,
+                    tooltip=[
+                        alt.Tooltip('plant_name:N', title='Plant'),
+                        alt.Tooltip('total_capture_cost_euro:Q', title='Capture Cost (€)', format=',.0f'),
+                        alt.Tooltip('cost_share_pct:Q', title='Share (%)', format='.1f')
+                    ]
+                )
 
             # Labels for Cost
-            text_cost = alt.Chart(selected_p_df).mark_text(
-                align='left', 
-                baseline='middle', 
-                dx=4, 
-                fontWeight='bold',
-                clip=False, # Make sure long labels are not clipped off the graph
-                size=alt.expr("max(13, min(width / 40, 18))") # Dynamic font size scaling
-            ).encode(
-                x=alt.X('total_capture_cost_euro:Q'),
-                y=alt.Y('plant_name:N', sort='-x'),
-                text='cost_label:N',
-                color=alt.Color('plant_name:N', legend=None),
-                opacity=alt.condition(hover, alt.value(1.0), alt.value(0.4))
-            )
+            def get_text_cost(color_hex, interactive=True):
+                op = alt.condition(hover, alt.value(1.0), alt.value(0.4)) if interactive else alt.value(1.0)
+                return alt.Chart(selected_p_df).mark_text(
+                    align='left', baseline='middle', dx=4, fontWeight='bold', clip=False,
+                    size=alt.expr("max(13, min(width / 40, 18))"), color=color_hex
+                ).encode(
+                    x=alt.X('total_capture_cost_euro:Q'), y=alt.Y('plant_name:N', sort=sorted_cost),
+                    text='cost_label:N', opacity=op
+                )
 
-            chart_cost = (bar_cost + text_cost).properties(title="Total Capture Cost Share", height=min(350, max(200, len(selected_p_df)*42))).add_params(hover)
+            chart_cost_ui = apply_universal_chart_formatting((get_bar_cost(True) + get_text_cost('currentColor', True)).properties(title="Total Capture Cost Share", height=min(350, max(200, len(selected_p_df)*42))).add_params(hover))
+            chart_cost_export = apply_universal_chart_formatting((get_bar_cost(False) + get_text_cost('#000000', False)).properties(
+                title="Total Capture Cost Share", width=700, height=export_h
+            ), force_black=True)
 
             col_c1, col_c2 = st.columns(2)
             with col_c1:
-                st.altair_chart(apply_universal_chart_formatting(chart_co2), use_container_width=True)
+                st.altair_chart(chart_co2_ui, use_container_width=True)
+                render_download_button(chart_co2_export, "co2_share.svg", "dl_co2")
             with col_c2:
-                st.altair_chart(apply_universal_chart_formatting(chart_cost), use_container_width=True)
+                st.altair_chart(chart_cost_ui, use_container_width=True)
+                render_download_button(chart_cost_export, "cost_share.svg", "dl_cost")
                 
         st.divider()
         
@@ -512,17 +554,25 @@ with tab_analytics:
             # Filter to active only for cleaner stacked chart
             active_only_df = py_df[py_df['active_in_year'] == True]
             
+            # Smart X-axis thinning for export
+            total_years = active_only_df['calendar_year'].nunique() if not active_only_df.empty else 1
+            yr_step = 5 if total_years > 20 else (2 if total_years > 10 else 1)
+            
             # Uniform Hover Logic for Plant Name
             hover_plant = alt.selection_point(on='mouseover', empty=True, nearest=False, fields=['plant_name'])
             
             # Create base stacked bar chart
-            bar_chart = alt.Chart(active_only_df).mark_bar(clip=False).encode(
-                x=alt.X('calendar_year:O', title='Calendar Year', axis=alt.Axis(labelAngle=0)),
-                y=alt.Y('contribution_to_hub_load_mtpy:Q', title='Hub Load (Mt/y)'),
-                color=alt.Color('plant_name:N', title='Plant Name'),
-                opacity=alt.condition(hover_plant, alt.value(1.0), alt.value(0.4)),
-                tooltip=['plant_name', 'calendar_year', 'contribution_to_hub_load_mtpy']
-            ).add_params(hover_plant)
+            def get_hub_chart(interactive=True):
+                op = alt.condition(hover_plant, alt.value(1.0), alt.value(0.4)) if interactive else alt.value(1.0)
+                # Force X-axis thinning if not interactive (export mode)
+                x_axis = alt.Axis(labelAngle=0) if interactive else alt.Axis(labelAngle=0, labelExpr=f"datum.value % {yr_step} == 0 ? datum.value : ''")
+                return alt.Chart(active_only_df).mark_bar(clip=False).encode(
+                    x=alt.X('calendar_year:O', title='Calendar Year', axis=x_axis),
+                    y=alt.Y('contribution_to_hub_load_mtpy:Q', title='Hub Load (Mt/y)'),
+                    color=alt.Color('plant_name:N', title='Plant Name', scale=plant_color_scale),
+                    opacity=op,
+                    tooltip=['plant_name', 'calendar_year', 'contribution_to_hub_load_mtpy']
+                )
             
             # Create rule for Annual Hub Capacity limit (Will remain fully opaque and clear)
             capacity_df = pd.DataFrame({'limit': [sys_params['annual_hub_capacity_mtpy']]})
@@ -530,49 +580,74 @@ with tab_analytics:
                 y='limit:Q'
             )
             # Layer and display
-            final_hub_chart = apply_universal_chart_formatting((bar_chart + rule_chart).properties(title="Hub Load Contributions by Plant (Stacked)"))
-            st.altair_chart(final_hub_chart, use_container_width=True)
+            chart_hub_ui = apply_universal_chart_formatting((get_hub_chart(True).add_params(hover_plant) + rule_chart).properties(title="Hub Load Contributions by Plant (Stacked)"))
+            chart_hub_export = apply_universal_chart_formatting((get_hub_chart(False) + rule_chart).properties(
+                title="Hub Load Contributions by Plant (Stacked)", width=900, height=450
+            ), force_black=True)
+            
+            st.altair_chart(chart_hub_ui, use_container_width=True)
+            render_download_button(chart_hub_export, "hub_load.svg", "dl_hub")
             
         with col_g2:
             # Interactive Selection for X-axis (Years)
             hover_year = alt.selection_point(on='mouseover', empty=False, nearest=True, fields=['calendar_year'])
             
-            base_area = alt.Chart(ye_df).encode(
-                x=alt.X('calendar_year:O', title='Calendar Year', axis=alt.Axis(labelAngle=0))
-            )
+            total_years = ye_df['calendar_year'].nunique() if not ye_df.empty else 1
+            yr_step = 5 if total_years > 20 else (2 if total_years > 10 else 1)
             
-            # The Area Chart (always remains clear, tooltip as fallback)
-            area_chart = base_area.mark_area(opacity=0.6, color='steelblue', clip=False).encode(
-                y=alt.Y('cumulative_storage_used_mt:Q', title='Cumulative Storage (Mt)'),
-                tooltip=['calendar_year', 'cumulative_storage_used_mt', 'storage_remaining_mt']
-            )
+            def get_area_chart(interactive=True):
+                x_axis = alt.Axis(labelAngle=0) if interactive else alt.Axis(labelAngle=0, labelExpr=f"datum.value % {yr_step} == 0 ? datum.value : ''")
+                base = alt.Chart(ye_df).encode(x=alt.X('calendar_year:O', title='Calendar Year', axis=x_axis))
+                return base.mark_area(opacity=0.6, color='steelblue', clip=False).encode(
+                    y=alt.Y('cumulative_storage_used_mt:Q', title='Cumulative Storage (Mt)'),
+                    tooltip=['calendar_year', 'cumulative_storage_used_mt', 'storage_remaining_mt']
+                ), base
             
-            # Vertical hover rules (appear only on hover)
-            rules = base_area.mark_rule(color='silver', strokeWidth=2).encode(
+            area_chart_ui, base_area_ui = get_area_chart(True)
+            area_chart_export, _ = get_area_chart(False)
+
+            # Interactive elements for UI only
+            selectors = alt.Chart(ye_df).mark_point().encode(
+                x='calendar_year:O', opacity=alt.value(0),
+            ).add_params(hover_year)
+            
+            rules = base_area_ui.mark_rule(strokeWidth=2).encode(
                 opacity=alt.condition(hover_year, alt.value(1.0), alt.value(0.0))
             )
             
-            # Data point intersections (appear only on hover)
-            points = base_area.mark_circle(color='white', size=60, stroke='steelblue', strokeWidth=2).encode(
+            points = base_area_ui.mark_circle(color='white', size=60, stroke='steelblue', strokeWidth=2).encode(
                 y='cumulative_storage_used_mt:Q',
                 opacity=alt.condition(hover_year, alt.value(1.0), alt.value(0.0))
             )
-            
-            # Invisible broad rule to capture hover events robustly across the entire Y height
-            selectors = base_area.mark_rule(opacity=0, strokeWidth=40).encode(
-                tooltip=['calendar_year', 'cumulative_storage_used_mt', 'storage_remaining_mt']
-            ).add_params(hover_year)
             
             storage_cap_df = pd.DataFrame({'limit': [sys_params['cumulative_storage_capacity_mt']]})
             storage_rule = alt.Chart(storage_cap_df).mark_rule(color='red', strokeDash=[5, 5]).encode(
                 y='limit:Q'
             )
             
-            # Layering: Area -> Selection hitboxes -> Limit Rule -> Vertical Rules -> Highlight Points
-            final_storage_chart = apply_universal_chart_formatting(
-                (area_chart + selectors + storage_rule + rules + points).properties(title="Cumulative Storage Used vs. Capacity")
-            )
-            st.altair_chart(final_storage_chart, use_container_width=True)
+            # --- NUMERIC LABELS ---
+            min_yr = int(ye_df['calendar_year'].min())
+            limit_label_df = pd.DataFrame({'limit': [sys_params['cumulative_storage_capacity_mt']], 'text': [f"Limit: {sys_params['cumulative_storage_capacity_mt']:.1f} Mt"], 'x': [min_yr]})
+            
+            limit_text = alt.Chart(limit_label_df).mark_text(
+                align='left', baseline='bottom', dy=-5, dx=5, fontWeight='bold', size=14, color='red'
+            ).encode(x=alt.X('x:O'), y=alt.Y('limit:Q'), text='text:N')
+            
+            final_row = ye_df.iloc[[-1]].copy()
+            final_row['text'] = final_row['cumulative_storage_used_mt'].apply(lambda v: f"Used: {v:.1f} Mt")
+            
+            def get_used_text(color_hex):
+                return alt.Chart(final_row).mark_text(
+                    align='right', baseline='bottom', dy=-15, dx=0, fontWeight='bold', size=14, color=color_hex
+                ).encode(x=alt.X('calendar_year:O'), y=alt.Y('cumulative_storage_used_mt:Q'), text='text:N')
+            
+            chart_area_ui = apply_universal_chart_formatting((area_chart_ui + selectors + storage_rule + limit_text + rules + points + get_used_text('currentColor')).properties(title="Cumulative Storage Used vs. Capacity"))
+            chart_area_export = apply_universal_chart_formatting((area_chart_export + storage_rule + limit_text + get_used_text('#000000')).properties(
+                title="Cumulative Storage Used vs. Capacity", width=900, height=450
+            ), force_black=True)
+            
+            st.altair_chart(chart_area_ui, use_container_width=True)
+            render_download_button(chart_area_export, "cumulative_storage.svg", "dl_area")
 
         st.divider()
 

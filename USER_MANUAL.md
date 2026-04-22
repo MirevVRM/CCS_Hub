@@ -10,7 +10,7 @@ This tool is designed to help engineers, analysts, and technical leads determine
 
 If you already have Python 3.9+ installed, complete just three steps to get started:
 
-**1. Open a terminal in your project folder (`project_name`).**
+**1. Open a terminal in your project folder (`case_one`).**
 
 **2. Set up the environment and install dependencies:**
 ```bash
@@ -37,7 +37,7 @@ If you need a detailed installation guide:
 - Installed **Python version 3.9** (or newer). If Python is not installed, download it from the [official website](https://www.python.org/downloads/). *Make sure to check the "Add Python to PATH" box during installation.*
 
 ### 2. Step-by-Step Installation
-Open a built-in terminal (e.g., in VS Code, PyCharm, or a standard Windows PowerShell console), navigate to the `project_name` project folder, and run the following commands one by one:
+Open a built-in terminal (e.g., in VS Code, PyCharm, or a standard Windows PowerShell console), navigate to the `case_one` project folder, and run the following commands one by one:
 
 1. **Create a virtual environment** (this is an isolated environment for the program to prevent conflicts with your operating system):
    ```bash
